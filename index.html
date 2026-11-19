@@ -168,7 +168,145 @@
 </section></main>
 <script>
 'use strict';
+// ======================================
+// PVR ROAD SECTION GENERATOR
+// ======================================
 
+function generateRoadSections() {
+
+    const startInput = document.getElementById('sectionStart').value;
+    const endInput = document.getElementById('sectionEnd').value;
+
+    const sectionLength = Number(
+        document.getElementById('sectionLength').value
+    );
+
+    const interval = Number(
+        document.getElementById('chainageInterval').value
+    );
+
+    const tbody = document.getElementById('roadSectionBody');
+
+    if (!startInput || !endInput || !tbody) {
+        alert('Please enter the starting and ending chainages.');
+        return;
+    }
+
+    if (sectionLength <= 0 || interval <= 0) {
+        alert('Section length and chainage interval must be positive.');
+        return;
+    }
+
+    function toMetres(value) {
+        const clean = value.replace(/\s/g, '');
+
+        if (clean.includes('+')) {
+            const parts = clean.split('+');
+
+            if (parts.length !== 2 ||
+                !/^\d+$/.test(parts[0]) ||
+                !/^\d{1,3}$/.test(parts[1])) {
+                return NaN;
+            }
+
+            return Number(parts[0]) * 1000 + Number(parts[1]);
+        }
+
+        return Number(clean);
+    }
+
+    function formatChainage(value) {
+        const km = Math.floor(value / 1000);
+        const metres = Math.round(value % 1000);
+
+        return km + '+' + String(metres).padStart(3, '0');
+    }
+
+    const start = toMetres(startInput);
+    const end = toMetres(endInput);
+
+    if (!Number.isFinite(start) ||
+        !Number.isFinite(end) ||
+        end <= start) {
+        alert('Please check your chainage values.');
+        return;
+    }
+
+    tbody.innerHTML = '';
+
+    let current = start;
+    let sectionNumber = 1;
+
+    const generatedSections = [];
+
+    while (current < end) {
+
+        const next = Math.min(
+            current + sectionLength,
+            end
+        );
+
+        const actualLength = next - current;
+
+        const section = {
+            number: sectionNumber,
+            start: current,
+            end: next,
+            startChainage: formatChainage(current),
+            endChainage: formatChainage(next),
+            length: actualLength,
+            interval: interval,
+            progress: 0,
+            status: 'Not Started'
+        };
+
+        generatedSections.push(section);
+
+        const row = document.createElement('tr');
+
+        const values = [
+            'Section ' + sectionNumber,
+            section.startChainage,
+            section.endChainage,
+            actualLength,
+            '0%',
+            'Not Started',
+            '—'
+        ];
+
+        values.forEach(value => {
+            const cell = document.createElement('td');
+            cell.textContent = value;
+            row.appendChild(cell);
+        });
+
+        tbody.appendChild(row);
+
+        current = next;
+        sectionNumber++;
+    }
+
+    window.pvrRoadSections = generatedSections;
+
+    const summary = document.getElementById('sectionSummary');
+
+    if (summary) {
+        summary.textContent =
+            generatedSections.length +
+            ' road sections generated. Total length: ' +
+            (end - start) + ' metres.';
+    }
+
+    console.log(
+        'PVR Road Sections Generated:',
+        generatedSections
+    );
+
+    alert(
+        generatedSections.length +
+        ' road sections generated successfully.'
+    );
+}
 // Preserve the original PVR engineering baseline.
 const ORIGINAL_BASE = JSON.parse(
     document.getElementById('workbookData').textContent
