@@ -441,85 +441,86 @@ table('advPeriodTable',['Period','Records','Approved Qty','Pending Qty','Approve
 $('advRefresh').addEventListener('click',generateAdvancedReports);$('advExport').addEventListener('click',async()=>{await generateAdvancedReports();const lines=[['Report','Group','Records','Approved Quantity','Pending Quantity','Approved Records','Pending Records'],...advancedReportData.periods.map(x=>['Period',x.name,x.records,x.approved,x.pending,x.approvedCount,x.pendingCount]),...advancedReportData.surveyors.map(x=>['Surveyor',x.name,x.records,x.approved,x.pending,x.approvedCount,x.pendingCount]),...advancedReportData.subs.map(x=>['Sub-project',x.name,x.records,x.approved,x.pending,x.approvedCount,x.pendingCount])];const csv='\uFEFF'+lines.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');download('TES_Earthworks_Advanced_Reports_'+new Date().toISOString().slice(0,10)+'.csv',csv,'text/csv;charset=utf-8')});
 // ==========================================
 // TES EARTHWORKS DIGITISED
-// ROAD SECTION EXPORT FUNCTION
+// ROAD SECTION EXPORT
 // ==========================================
 
 function exportRoadSections() {
 
-    try {
+    const table = document.getElementById('roadSectionTable');
+    const tbody = document.getElementById('roadSectionBody');
 
-        // Retrieve generated road sections
-        const sections = JSON.parse(
-            localStorage.getItem("roadSections") || "[]"
-        );
+    if (!table || !tbody) {
+        alert('Road section table not found.');
+        return;
+    }
 
-        if (!sections.length) {
-            alert("No road sections available to export.");
-            return;
-        }
+    const rows = tbody.querySelectorAll('tr');
 
-        // CSV headings
-        const headers = [
-            "Section Number",
-            "Start Chainage",
-            "End Chainage",
-            "Section Length",
-            "Status"
-        ];
+    if (rows.length === 0) {
+        alert('Generate road sections before exporting.');
+        return;
+    }
 
-        // Convert sections into CSV rows
-        const rows = sections.map((section, index) => {
+    const headers = Array.from(
+        table.querySelectorAll('thead th')
+    ).map(function(th) {
+        return th.innerText.trim();
+    });
 
-            return [
-                section.sectionNumber || index + 1,
-                section.startChainage || "",
-                section.endChainage || "",
-                section.length || "",
-                section.status || ""
-            ];
+    const csvRows = [];
+
+    csvRows.push(headers);
+
+    rows.forEach(function(row) {
+
+        const values = Array.from(
+            row.querySelectorAll('td')
+        ).map(function(cell) {
+
+            return cell.innerText.trim();
 
         });
 
-        // Build CSV content
-        const csvContent = [
-            headers,
-            ...rows
-        ].map(row =>
-            row.map(value =>
-                "${String(value).replace(/"/g, '""')}"
-            ).join(",")
-        ).join("\r\n");
+        csvRows.push(values);
 
-        // Create downloadable file
-        const blob = new Blob(
-            ["\uFEFF" + csvContent],
-            { type: "text/csv;charset=utf-8;" }
-        );
+    });
 
-        const url = URL.createObjectURL(blob);
+    // Safely format CSV values
+    const csvContent = csvRows.map(function(row) {
 
-        const link = document.createElement("a");
+        return row.map(function(value) {
 
-        link.href = url;
-        link.download = "TES_Road_Sections_Export.csv";
+            return '"' +
+                String(value).replace(/"/g, '""') +
+                '"';
 
-        document.body.appendChild(link);
+        }).join(',');
 
-        link.click();
+    }).join('\r\n');
 
-        document.body.removeChild(link);
+    const blob = new Blob(
+        ['\uFEFF' + csvContent],
+        { type: 'text/csv;charset=utf-8;' }
+    );
 
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = 'TES_Road_Sections.csv';
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    setTimeout(function() {
         URL.revokeObjectURL(url);
+    }, 1000);
 
-        alert("Road sections exported successfully.");
-
-    } catch (error) {
-
-        console.error("Road Section Export Error:", error);
-
-        alert("Unable to export road sections. Please check the data.");
-
-    }
+    alert('Road sections exported successfully!');
 
 }
 </script>
