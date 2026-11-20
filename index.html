@@ -441,7 +441,7 @@ table('advPeriodTable',['Period','Records','Approved Qty','Pending Qty','Approve
 $('advRefresh').addEventListener('click',generateAdvancedReports);$('advExport').addEventListener('click',async()=>{await generateAdvancedReports();const lines=[['Report','Group','Records','Approved Quantity','Pending Quantity','Approved Records','Pending Records'],...advancedReportData.periods.map(x=>['Period',x.name,x.records,x.approved,x.pending,x.approvedCount,x.pendingCount]),...advancedReportData.surveyors.map(x=>['Surveyor',x.name,x.records,x.approved,x.pending,x.approvedCount,x.pendingCount]),...advancedReportData.subs.map(x=>['Sub-project',x.name,x.records,x.approved,x.pending,x.approvedCount,x.pendingCount])];const csv='\uFEFF'+lines.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');download('TES_Earthworks_Advanced_Reports_'+new Date().toISOString().slice(0,10)+'.csv',csv,'text/csv;charset=utf-8')});
 // ==========================================
 // TES EARTHWORKS DIGITISED
-// ROAD SECTION EXPORT
+// ROAD SECTION EXCEL EXPORT
 // ==========================================
 
 function exportRoadSections() {
@@ -454,53 +454,33 @@ function exportRoadSections() {
         return;
     }
 
-    const rows = tbody.querySelectorAll('tr');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
 
-    if (rows.length === 0) {
-        alert('Generate road sections before exporting.');
+    if (!rows.length) {
+        alert('Please generate road sections first.');
         return;
     }
 
     const headers = Array.from(
         table.querySelectorAll('thead th')
-    ).map(function(th) {
-        return th.innerText.trim();
-    });
+    ).map(th => th.innerText.trim());
 
-    const csvRows = [];
+    const data = rows.map(row =>
+        Array.from(row.querySelectorAll('td')).map(cell =>
+            cell.innerText.trim()
+                .replace(/\t/g, ' ')
+                .replace(/\r?\n/g, ' ')
+        )
+    );
 
-    csvRows.push(headers);
-
-    rows.forEach(function(row) {
-
-        const values = Array.from(
-            row.querySelectorAll('td')
-        ).map(function(cell) {
-
-            return cell.innerText.trim();
-
-        });
-
-        csvRows.push(values);
-
-    });
-
-    // Safely format CSV values
-    const csvContent = csvRows.map(function(row) {
-
-        return row.map(function(value) {
-
-            return '"' +
-                String(value).replace(/"/g, '""') +
-                '"';
-
-        }).join(',');
-
-    }).join('\r\n');
+    const tsvContent = [
+        headers,
+        ...data
+    ].map(row => row.join('\t')).join('\r\n');
 
     const blob = new Blob(
-        ['\uFEFF' + csvContent],
-        { type: 'text/csv;charset=utf-8;' }
+        ['\uFEFF' + tsvContent],
+        { type: 'text/tab-separated-values;charset=utf-8;' }
     );
 
     const url = URL.createObjectURL(blob);
@@ -508,19 +488,15 @@ function exportRoadSections() {
     const link = document.createElement('a');
 
     link.href = url;
-    link.download = 'TES_Road_Sections.csv';
+    link.download = 'TES_Road_Sections.xls.tsv';
 
     document.body.appendChild(link);
-
     link.click();
-
     document.body.removeChild(link);
 
-    setTimeout(function() {
-        URL.revokeObjectURL(url);
-    }, 1000);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-    alert('Road sections exported successfully!');
+    alert('Road sections exported successfully.');
 
 }
 </script>
