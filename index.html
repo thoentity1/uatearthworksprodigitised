@@ -148,7 +148,11 @@
         <button onclick="generateRoadSections()">
             GENERATE ROAD SECTIONS
         </button>
-
+    <button type="button" onclick="exportRoadSections()"
+        style="background:#008c95; color:white; padding:10px 18px;
+        border:none; border-radius:5px; margin-left:10px;">
+    EXPORT ROAD SECTIONS
+    </button>
     </div>
 
     <div id="sectionSummary"></div>
@@ -435,4 +439,89 @@ advancedReportData={periods:Object.values(periods).sort((a,b)=>a.name.localeComp
 function table(id,headers,items){$(id).innerHTML='<thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+(items.length?items.map(x=>'<tr>'+x.map(v=>'<td>'+escHtml(v)+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="'+headers.length+'">No measurement records in the selected date range.</td></tr>')+'</tbody>'}
 table('advPeriodTable',['Period','Records','Approved Qty','Pending Qty','Approved Records','Pending Records'],advancedReportData.periods.map(x=>[x.name,x.records,fmt(x.approved),fmt(x.pending),x.approvedCount,x.pendingCount]));table('advSurveyorTable',['Surveyor','Records','Approved Qty','Pending Qty','Approved Records','Pending Records'],advancedReportData.surveyors.map(x=>[x.name,x.records,fmt(x.approved),fmt(x.pending),x.approvedCount,x.pendingCount]));table('advSubTable',['Project / Sub-Project','Records','Approved Qty','Pending Qty','Approved Records','Pending Records'],advancedReportData.subs.map(x=>[x.name,x.records,fmt(x.approved),fmt(x.pending),x.approvedCount,x.pendingCount]));}
 $('advRefresh').addEventListener('click',generateAdvancedReports);$('advExport').addEventListener('click',async()=>{await generateAdvancedReports();const lines=[['Report','Group','Records','Approved Quantity','Pending Quantity','Approved Records','Pending Records'],...advancedReportData.periods.map(x=>['Period',x.name,x.records,x.approved,x.pending,x.approvedCount,x.pendingCount]),...advancedReportData.surveyors.map(x=>['Surveyor',x.name,x.records,x.approved,x.pending,x.approvedCount,x.pendingCount]),...advancedReportData.subs.map(x=>['Sub-project',x.name,x.records,x.approved,x.pending,x.approvedCount,x.pendingCount])];const csv='\uFEFF'+lines.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');download('TES_Earthworks_Advanced_Reports_'+new Date().toISOString().slice(0,10)+'.csv',csv,'text/csv;charset=utf-8')});
-</script></body></html>
+</script>
+// ==========================================
+// TES EARTHWORKS DIGITISED
+// ROAD SECTION EXPORT FUNCTION
+// ==========================================
+
+function exportRoadSections() {
+
+    try {
+
+        // Retrieve generated road sections
+        const sections = JSON.parse(
+            localStorage.getItem("roadSections") || "[]"
+        );
+
+        if (!sections.length) {
+            alert("No road sections available to export.");
+            return;
+        }
+
+        // CSV headings
+        const headers = [
+            "Section Number",
+            "Start Chainage",
+            "End Chainage",
+            "Section Length",
+            "Status"
+        ];
+
+        // Convert sections into CSV rows
+        const rows = sections.map((section, index) => {
+
+            return [
+                section.sectionNumber || index + 1,
+                section.startChainage || "",
+                section.endChainage || "",
+                section.length || "",
+                section.status || ""
+            ];
+
+        });
+
+        // Build CSV content
+        const csvContent = [
+            headers,
+            ...rows
+        ].map(row =>
+            row.map(value =>
+                "${String(value).replace(/"/g, '""')}"
+            ).join(",")
+        ).join("\r\n");
+
+        // Create downloadable file
+        const blob = new Blob(
+            ["\uFEFF" + csvContent],
+            { type: "text/csv;charset=utf-8;" }
+        );
+
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "TES_Road_Sections_Export.csv";
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(url);
+
+        alert("Road sections exported successfully.");
+
+    } catch (error) {
+
+        console.error("Road Section Export Error:", error);
+
+        alert("Unable to export road sections. Please check the data.");
+
+    }
+
+}
+</body>
+</html>
