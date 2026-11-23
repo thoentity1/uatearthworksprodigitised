@@ -49,7 +49,7 @@
 <span class="status" id="quantitiesXlsxStatus">Download the workbook, update the Design Quantities worksheet, then upload it here. Other worksheets and unrelated records are preserved.</span>
 </div><div class="filters"><input id="qSearch" placeholder="Search activity…"><select id="qSide"><option value="">All sides</option><option>Left</option><option>Right</option><option>Full Width</option></select><select id="qChain"><option value="">All chainages</option></select><span class="status">Design quantity cells are editable. Changes recalculate progress.</span></div><div class="tablewrap"><table id="quantityTable"></table></div></section>
 <section id="summaryView" class="panel hidden"><h2>Rural 1 Qty's – Calculated Activity Summary</h2><div class="tablewrap"><table class="summarytable" id="summaryTable"></table></div></section>
-<section id="engineeringView" class="panel hidden"><h2>Engineering Register & Validation</h2><div class="note">This register provides a read-only engineering overview of the imported chainages and design quantities. Edit design quantities in the Design Quantities tab; the original chainage baseline is protected.</div><div class="cards"><div class="card"><small>Registered chainages</small><strong id="engChainCount">—</strong></div><div class="card"><small>Activity / side rows</small><strong id="engRowCount">—</strong></div><div class="card"><small>Non-zero design cells</small><strong id="engNonzero">—</strong></div><div class="card"><small>Completed cells</small><strong id="engDone">—</strong></div><div class="card"><small>Uncompleted design cells</small><strong id="engOpen">—</strong></div></div><div class="hub-actions"><button id="engExport">Export Engineering Register CSV</button></div><h3>Chainage summary</h3><div class="tablewrap"><table class="summarytable" id="chainageRegister"></table></div><h3 style="margin-top:18px">Activity / side quantity summary</h3><div class="tablewrap"><table class="summarytable" id="engineeringActivityTable"></table></div></section>
+<section id="engineeringView" class="panel hidden"><h2>Engineering Register & Validation</h2><div class="note">This register provides a read-only engineering overview of the imported chainages and design quantities. Edit design quantities in the Design Quantities tab; the original chainage baseline is protected.</div><div class="cards"><div class="card"><small>Registered chainages</small><strong id="engChainCount">—</strong></div><div class="card"><small>Activity / side rows</small><strong id="engRowCount">—</strong></div><div class="card"><small>Non-zero design cells</small><strong id="engNonzero">—</strong></div><div class="card"><small>Completed cells</small><strong id="engDone">—</strong></div><div class="card"><small>Uncompleted design cells</small><strong id="engOpen">—</strong></div></div><div class="hub-actions"><button id="engExport">Export Engineering Register Excel</button></div><h3>Chainage summary</h3><div class="tablewrap"><table class="summarytable" id="chainageRegister"></table></div><h3 style="margin-top:18px">Activity / side quantity summary</h3><div class="tablewrap"><table class="summarytable" id="engineeringActivityTable"></table></div></section>
 <section id="captureView" class="panel hidden"><h2>Actual Progress Capture</h2><div class="note"><b>Important:</b> Measurement records are stored separately from the original TRUE/FALSE workbook completion indicators. Recording a measurement does not automatically tick a completion cell or change workbook quantities.</div><div class="cards"><div class="card"><small>Measurement records</small><strong id="captureCount">0</strong></div><div class="card"><small>Total measured quantity</small><strong id="captureTotal">0.00</strong></div></div><form id="captureForm"><div class="formgrid"><label>Measurement date *<input id="capDate" type="date" required></label><label>Chainage *<select id="capChain" required></select></label><label>Activity / side *<select id="capActivity" required></select></label><label>Actual measured quantity *<input id="capQty" type="number" min="0" step="0.001" required></label><label>Surveyor name *<input id="capSurveyor" required></label><label style="grid-column:1/-1">Notes<textarea id="capNotes" rows="2"></textarea></label></div><div class="hub-actions"><button class="primary" type="submit">Save Measurement</button><button type="button" id="capExport">Export Measurements CSV</button></div></form><h3>Saved measurement records</h3><div class="tablewrap"><table class="summarytable" id="captureTable"></table></div></section>
 <section id="reconcileView" class="panel hidden"><h2>Engineering Reconciliation & Measurement Approval</h2><div class="note">Reconciliation compares approved measured quantities against the current design quantity for the same chainage, activity and side. Pending measurements are excluded from the approved total. This report does not alter the original TRUE/FALSE completion indicators.</div><div class="cards"><div class="card"><small>Approved measured quantity</small><strong id="recApproved">0.00</strong></div><div class="card"><small>Pending measured quantity</small><strong id="recPending">0.00</strong></div><div class="card"><small>Design quantity matched</small><strong id="recDesign">0.00</strong></div><div class="card"><small>Approved variance</small><strong id="recVariance">0.00</strong></div><div class="card"><small>Approved records</small><strong id="recCount">0</strong></div></div><div class="hub-actions"><button id="recExport">Export Reconciliation CSV</button></div><h3>Chainage / activity reconciliation</h3><div class="tablewrap"><table class="summarytable" id="reconcileTable"></table></div></section>
 <footer>THE ENTITY SOLUTIONS · PVR Earthworks Progress Tracker · Standalone browser application. Progress and quantity edits are saved in this browser. Download a backup regularly.</footer></div></main>
@@ -101,7 +101,49 @@ function download(name,content,type){let blob=new Blob([content],{type}),a=docum
 $('backupBtn').addEventListener('click',()=>download('Earthworks_Backup_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({title:BASE.title,chainages:BASE.chainages,activities:rows},null,2),'application/json'));
 $('exportBtn').addEventListener('click',()=>{let out=[['Activity','Side','Chainage','Design Quantity','Completed','Completed Quantity','Outstanding Quantity']];rows.forEach(r=>r.design.forEach((q,j)=>{let n=Number(q)||0,d=!!r.completed[j];out.push([r.activity,r.side,chFmt(BASE.chainages[j]),n,d?'TRUE':'FALSE',d?n:0,d?0:n])}));let csv='\uFEFF'+out.map(a=>a.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');download('Earthworks_Progress_'+new Date().toISOString().slice(0,10)+'.csv',csv,'text/csv;charset=utf-8')});
 
-$('engExport').addEventListener('click',()=>{let out=[['Record Type','Chainage / Activity','Side','Design Quantity','Completed Quantity','Outstanding Quantity','Progress / Completion']];BASE.chainages.forEach((ch,j)=>{let d=0,c=0;rows.forEach(r=>{let q=Number(r.design[j])||0;d+=q;if(r.completed[j])c+=q});out.push(['Chainage',chFmt(ch),'',d,c,d-c,d?((c/d)*100).toFixed(2)+'%':'0.00%'])});rows.forEach(r=>{let d=0,c=0,cells=0,done=0;r.design.forEach((q,j)=>{q=Number(q)||0;d+=q;if(q>0){cells++;if(r.completed[j]){c+=q;done++}}});out.push(['Activity',r.activity,r.side,d,c,d-c,cells?(done/cells*100).toFixed(2)+'%':'0.00%'])});let csv='\uFEFF'+out.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');download('TES_Earthworks_Engineering_Register_'+new Date().toISOString().slice(0,10)+'.csv',csv,'text/csv;charset=utf-8')});
+$('engExport').addEventListener('click',()=>{
+ if(typeof XLSX==='undefined'){alert('Excel export library is not available. Please connect to the internet and refresh the application.');return;}
+ // Transposed chainage summary: chainages run horizontally, engineering measures vertically.
+ const summary=[['Engineering Measure',...BASE.chainages.map(chFmt)]];
+ const designByChain=[],completedByChain=[];
+ BASE.chainages.forEach((ch,j)=>{
+  let d=0,c=0;
+  rows.forEach(r=>{const q=Number(r.design[j])||0;d+=q;if(r.completed[j])c+=q;});
+  designByChain.push(d);completedByChain.push(c);
+ });
+ const outstandingByChain=designByChain.map((d,i)=>d-completedByChain[i]);
+ const pctComplete=designByChain.map((d,i)=>d?completedByChain[i]/d*100:0);
+ const pctOutstanding=designByChain.map((d,i)=>d?outstandingByChain[i]/d*100:0);
+ summary.push(['Design Quantity',...designByChain]);
+ summary.push(['Completed Quantity',...completedByChain]);
+ summary.push(['Outstanding Quantity',...outstandingByChain]);
+ summary.push(['% Complete',...pctComplete]);
+ summary.push(['% Outstanding',...pctOutstanding]);
+
+ const detail=[['Activity','Side','Measure',...BASE.chainages.map(chFmt)]];
+ rows.forEach(r=>{
+  const design=r.design.map(q=>Number(q)||0);
+  const completed=design.map((q,j)=>r.completed[j]?q:0);
+  const outstanding=design.map((q,j)=>q-completed[j]);
+  detail.push([r.activity,r.side,'Design Quantity',...design]);
+  detail.push([r.activity,r.side,'Completed Quantity',...completed]);
+  detail.push([r.activity,r.side,'Outstanding Quantity',...outstanding]);
+  detail.push([r.activity,r.side,'% Complete',...design.map((q,j)=>q?completed[j]/q*100:0)]);
+ });
+
+ const wb=XLSX.utils.book_new();
+ const wsSummary=XLSX.utils.aoa_to_sheet(summary);
+ const wsDetail=XLSX.utils.aoa_to_sheet(detail);
+ wsSummary['!freeze']={xSplit:1,ySplit:1};
+ wsDetail['!freeze']={xSplit:3,ySplit:1};
+ wsSummary['!cols']=[{wch:25},...BASE.chainages.map(()=>({wch:13}))];
+ wsDetail['!cols']=[{wch:38},{wch:14},{wch:22},...BASE.chainages.map(()=>({wch:13}))];
+ wsSummary['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:summary.length-1,c:summary[0].length-1}})};
+ wsDetail['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:detail.length-1,c:detail[0].length-1}})};
+ XLSX.utils.book_append_sheet(wb,wsSummary,'Chainage Summary');
+ XLSX.utils.book_append_sheet(wb,wsDetail,'Activity Detail');
+ XLSX.writeFile(wb,'TES_Earthworks_Engineering_Register_'+new Date().toISOString().slice(0,10)+'.xlsx');
+});
 
 // Project-level reporting from independent local tracker snapshots.
 let reportRows=[];
