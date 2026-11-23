@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PVR Earthworks Progress Tracker – Digitised</title>
+<html lang="en"><head><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2212%22 fill=%22%23183b59%22/%3E%3Cpath d=%22M14 43 25 18h7l-11 25zm18 0 11-25h7L39 43z%22 fill=%22%2316a6a1%22/%3E%3C/svg%3E"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PVR Earthworks Progress Tracker – Digitised</title>
 <style>
 :root{--navy:#10263d;--navy2:#183b59;--teal:#16a6a1;--bg:#f2f5f8;--ink:#1d2b38;--muted:#647487;--line:#dbe3ea;--green:#16845b}*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px/1.45 "Segoe UI",Arial,sans-serif;color:var(--ink)}header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;padding:22px 28px;border-bottom:4px solid var(--teal)}.brand{font-size:12px;letter-spacing:2px;color:#9ddbd7;font-weight:700}.title{font-size:23px;font-weight:700;margin:5px 0}.subtitle{color:#c7d5e1}.wrap{max-width:1800px;margin:auto;padding:20px}.toolbar,.tabs,.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.toolbar{justify-content:space-between;margin-bottom:14px}.tabs{margin:14px 0}button,.tab{border:1px solid var(--line);background:#fff;color:var(--navy);padding:10px 15px;border-radius:7px;cursor:pointer;font-weight:600}button.primary,.tab.active{background:var(--navy2);color:#fff;border-color:var(--navy2)}button:disabled{opacity:.45;cursor:not-allowed}.status{font-size:12px;color:var(--muted)}.cards{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:12px;margin:14px 0}.card,.panel{background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 2px 8px #19334a0a}.card{padding:14px}.card small{color:var(--muted);display:block}.card strong{display:block;font-size:21px;margin-top:4px;color:var(--navy)}.panel{padding:16px;margin:14px 0}.panel h2{font-size:17px;margin:0 0 12px;color:var(--navy)}.filters{margin:12px 0}.filters input,.filters select{padding:10px;border:1px solid var(--line);border-radius:7px;background:#fff;min-width:160px}.tablewrap{overflow:auto;max-height:68vh;border:1px solid var(--line);border-radius:8px}table{border-collapse:separate;border-spacing:0;white-space:nowrap;font-size:12px}th,td{border-right:1px solid #e5ebf0;border-bottom:1px solid #e5ebf0;padding:5px 7px;text-align:center;min-width:65px;background:#fff}thead th{position:sticky;top:0;z-index:4;background:#eaf1f5;color:#183b59}th.activity,td.activity{position:sticky;left:0;z-index:3;text-align:left;min-width:245px;max-width:245px;white-space:normal;background:#f7fafc}th.side,td.side{position:sticky;left:245px;z-index:3;min-width:82px;background:#f7fafc}thead th.activity,thead th.side{z-index:6;background:#dfe9ef}input.tick{width:17px;height:17px;accent-color:var(--teal);cursor:pointer}input.qty{width:85px;border:1px solid transparent;border-radius:4px;padding:5px 3px;text-align:right;background:transparent;font:inherit}input.qty:focus{outline:2px solid var(--teal);background:#fff}.done{background:#e7f6ef!important}.hidden{display:none!important}.summarytable{width:100%;border-collapse:collapse;white-space:normal}.summarytable th,.summarytable td{position:static;text-align:left;padding:9px;min-width:unset}.summarytable th{background:#eaf1f5}.summarytable tr:nth-child(even) td{background:#f8fafb}.note{background:#fff8e7;border:1px solid #ead8a9;color:#66501d;padding:11px 13px;border-radius:8px;margin:12px 0}footer{color:var(--muted);font-size:12px;padding:18px 2px}@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}header{padding:18px}.wrap{padding:12px}}
 
@@ -104,7 +104,10 @@ $('exportBtn').addEventListener('click',()=>{let out=[['Activity','Side','Chaina
 $('engExport').addEventListener('click',()=>{
  if(typeof XLSX==='undefined'){alert('Excel export library is not available. Please connect to the internet and refresh the application.');return;}
  // Transposed chainage summary: chainages run horizontally, engineering measures vertically.
- const summary=[['Engineering Measure',...BASE.chainages.map(chFmt)]];
+ const summary=[
+  ['Engineering Measure',...BASE.chainages.map(()=> 'Chainage')],
+  ['',...BASE.chainages.map(chFmt)]
+ ];
  const designByChain=[],completedByChain=[];
  BASE.chainages.forEach((ch,j)=>{
   let d=0,c=0;
@@ -120,7 +123,10 @@ $('engExport').addEventListener('click',()=>{
  summary.push(['% Complete',...pctComplete]);
  summary.push(['% Outstanding',...pctOutstanding]);
 
- const detail=[['Activity','Side','Measure',...BASE.chainages.map(chFmt)]];
+ const detail=[
+  ['Activity','Side','Measure',...BASE.chainages.map(()=> 'Chainage')],
+  ['','','',...BASE.chainages.map(chFmt)]
+ ];
  rows.forEach(r=>{
   const design=r.design.map(q=>Number(q)||0);
   const completed=design.map((q,j)=>r.completed[j]?q:0);
@@ -134,8 +140,8 @@ $('engExport').addEventListener('click',()=>{
  const wb=XLSX.utils.book_new();
  const wsSummary=XLSX.utils.aoa_to_sheet(summary);
  const wsDetail=XLSX.utils.aoa_to_sheet(detail);
- wsSummary['!freeze']={xSplit:1,ySplit:1};
- wsDetail['!freeze']={xSplit:3,ySplit:1};
+ wsSummary['!freeze']={xSplit:1,ySplit:2};
+ wsDetail['!freeze']={xSplit:3,ySplit:2};
  wsSummary['!cols']=[{wch:25},...BASE.chainages.map(()=>({wch:13}))];
  wsDetail['!cols']=[{wch:38},{wch:14},{wch:22},...BASE.chainages.map(()=>({wch:13}))];
  wsSummary['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:summary.length-1,c:summary[0].length-1}})};
