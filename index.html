@@ -105,8 +105,8 @@ $('engExport').addEventListener('click',()=>{
  if(typeof XLSX==='undefined'){alert('Excel export library is not available. Please connect to the internet and refresh the application.');return;}
  // Transposed chainage summary: chainages run horizontally, engineering measures vertically.
  const summary=[
-  ['Engineering Measure',...BASE.chainages.map(()=> 'Chainage')],
-  ['',...BASE.chainages.map(chFmt)]
+  ['Engineering Measure',...BASE.chainages.map(()=> '')],
+  ['Chainage',...BASE.chainages.map(chFmt)]
  ];
  const designByChain=[],completedByChain=[];
  BASE.chainages.forEach((ch,j)=>{
@@ -144,8 +144,6 @@ $('engExport').addEventListener('click',()=>{
  wsDetail['!freeze']={xSplit:3,ySplit:2};
  wsSummary['!cols']=[{wch:25},...BASE.chainages.map(()=>({wch:13}))];
  wsDetail['!cols']=[{wch:38},{wch:14},{wch:22},...BASE.chainages.map(()=>({wch:13}))];
- wsSummary['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:summary.length-1,c:summary[0].length-1}})};
- wsDetail['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:detail.length-1,c:detail[0].length-1}})};
  XLSX.utils.book_append_sheet(wb,wsSummary,'Chainage Summary');
  XLSX.utils.book_append_sheet(wb,wsDetail,'Activity Detail');
  XLSX.writeFile(wb,'TES_Earthworks_Engineering_Register_'+new Date().toISOString().slice(0,10)+'.xlsx');
